@@ -41,8 +41,8 @@ void loop()
   period = millis() - lastSendTime;
   if (period > aliveTime)
   {
-    // Serial.write(COM_ALIVE); // 데이터 변화 없을 때 Alive 신호 전송
-    // updatePort();
+    Serial.write(COM_ALIVE); // 데이터 변화 없을 때 Alive 신호 전송
+    updatePort();
     lastSendTime = millis();
   }
 }
@@ -268,12 +268,13 @@ void data2Handling(int data2)
     // ServoP_Start, ServoP_NOw 는  Target에 도착했을 때 값을 동기화 시킨다.
     // 그렇지 않으면 서보 동작 함수에서 과거 값을 사용할 수 있다.
     // 여기에서 아래구분을 사용하면
-    // servoP_Start[remainidx] = servoP_Now[remainidx];
+    
     // 서보 전체 동작 신호 수신 -->  서보 전체 동작 함수 실행 --> 서보 Target 값 순으로 실행 시
     //  servoP_Target = 100         servoP_Target = 100        servoP_Target = 50
     //   servoP_Start = 0            servoP_Start = 0          servoP_Start = 0
     //   servoP_Now = 100              servoP_Now = 0          servoP_Now = 0 
     //                    (시간이 0에 가까우므로 스타트 값으로 설정된다)
+    servoP_Start[remainidx] = servoP_Now[remainidx];
     servoP_Target[remainidx] = int(6.667 * float(portValue[remainPort]) + 900);
     servoP_Delta[remainidx] = servoP_Target[remainidx] - servoP_Now[remainidx];
     servoT_Start[remainidx] = millis();
