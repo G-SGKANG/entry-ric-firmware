@@ -234,7 +234,6 @@ void data2Handling(int data2)
     }
     portValue[portNo] = (data2 & B00010000) >> 4;
     digitalWrite(portNo, portValue[portNo]);
-    // isOutputUpdated[portNo] = 1;
     // Serial.print("SET_DIGITAL_OUT : ");
     // Serial.println(mode);
     // Serial.print("portNo : ");
@@ -246,18 +245,18 @@ void data2Handling(int data2)
   case SET_ALL_SERVO_RUNTIME:
   {
     int port;
-    //Serial.println("All Servo Runtime");
+    // Serial.println("All Servo Runtime");
     for (int i = 0; i < Size_Servo; i++)
     {
       port = servo_IdxToPortNo[i];
       portMode[port] = SET_SERVO_RUNTIME;
       servoT_Start[i] = millis();
       servoT_Run[i] = portValue[0] * 100; // 1초가 10로 입력됨 --> ms 로 변환
-      
-      Serial.print("Port[");
-      Serial.print(port);
-      Serial.print("] runT:");
-      Serial.println(servoT_Run[i]);
+
+      // Serial.print("Port[");
+      // Serial.print(port);
+      // Serial.print("] runT:");
+      // Serial.println(servoT_Run[i]);
     }
   }
   break;
@@ -284,19 +283,20 @@ void data2Handling(int data2)
     servoP_Start[remainidx] = servoP_Now[remainidx];
     servoP_Target[remainidx] = int(6.667 * float(portValue[remainPort]) + 900);
     servoP_Delta[remainidx] = servoP_Target[remainidx] - servoP_Now[remainidx];
+    servoT_Start[remainidx] = 0; // 서보 모드에서 스타트 시간을 업데이트 할때 서보 기동
 
-    Serial.println("SET_SERVO_POSITION");
-    Serial.print("Set[");
-    Serial.print(remainidx);
-    Serial.print("]");
-    Serial.print(" Now:");
-    Serial.print(servoP_Now[remainidx]);
-    Serial.print(" Start:");
-    Serial.print(servoP_Start[remainidx]);
-    Serial.print(" Target:");
-    Serial.print(servoP_Target[remainidx]);
-    Serial.print(" Delta:");
-    Serial.println(servoP_Delta[remainidx]);
+    // Serial.println("SET_SERVO_POSITION");
+    // Serial.print("Set[");
+    // Serial.print(remainidx);
+    // Serial.print("]");
+    // Serial.print(" Now:");
+    // Serial.print(servoP_Now[remainidx]);
+    // Serial.print(" Start:");
+    // Serial.print(servoP_Start[remainidx]);
+    // Serial.print(" Target:");
+    // Serial.print(servoP_Target[remainidx]);
+    // Serial.print(" Delta:");
+    // Serial.println(servoP_Delta[remainidx]);
     break;
 
   case SET_SERVO_SPEED:
@@ -538,28 +538,26 @@ void ServoPoistionUpdate()
 
     if (portMode[portNo] == SET_SERVO_RUNTIME)
     {
-      
-      if ((servoP_Now[idx] != servoP_Target[idx]))
+      if (servoT_Start[idx] > 0) // 서보 스타트 시간이 존재할 때 기동
       {
         ServoT_Now[idx] = millis() - servoT_Start[idx];
         if (ServoT_Now[idx] >= servoT_Run[idx])
         {
           servoP_Now[idx] = servoP_Target[idx];
           servoP_Start[idx] = servoP_Target[idx];
+          servoT_Start[idx] = 0;
         }
         else
         {
           ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
           servoP_Now[idx] = int(ServoT_Now[idx] * servoP_Delta[idx] + servoP_Start[idx]);
           servo[idx].writeMicroseconds(servoP_Now[idx]);
-          
         }
-        //servo[idx].writeMicroseconds(servoP_Now[idx]);
-        //Serial.print("[");
-        //Serial.print(idx);
-        //Serial.print("]");
-        //Serial.println(servoP_Now[idx]);
-        
+        // servo[idx].writeMicroseconds(servoP_Now[idx]);
+        // Serial.print("[");
+        // Serial.print(idx);
+        // Serial.print("]");
+        // Serial.println(servoP_Now[idx]);
       }
     }
   }
