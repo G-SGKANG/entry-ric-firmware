@@ -3,7 +3,6 @@
 
 #include "Entry_ric_firmware.h"
 
-
 // **********************************************************************************
 void setup()
 {
@@ -34,8 +33,6 @@ void loop()
     }
   }
 
-  // 모터 커런트 값은 RMS 방식으로 계산하기 때문에 전송 주기마다 없데이트 하면
-  // 딜레이가 생긴다.
   ServoPoistionUpdate();
 
   period = millis() - lastSendTime;
@@ -47,6 +44,7 @@ void loop()
   }
 }
 
+int sizeData = 0;
 // **********************************************************************************
 void data1Handling(int data1)
 {
@@ -55,13 +53,13 @@ void data1Handling(int data1)
 
   switch (modeGroup)
   {
-  // Level 11111111111111111111111111
-  case SET_GROUP_COMMAND:
+  // ================================================================================
+  case SET_GROUP_1:
     mode = data1 & B11111000;
     switch (mode)
     {
-    // Level 222222222222222222222222
-    case SET_COM_SYSEM: // b1000 00 xxx
+    // -----------------------------------------------------------------
+    case SET_GROUP_11: // b1000 00 xxx
       switch (data1)
       {
       case SET_INIT_DEVICE:
@@ -71,24 +69,38 @@ void data1Handling(int data1)
         //   Serial.print("SET_INIT_DEVICE : ");
         //   Serial.println(DDRB);
         break;
-      case SET_PORT_DISABLE: // 사용하지 않음
-        // init_Divice_Entry_Run();
-        // Serial.write(COM_PORT_DISABLED);
-        // Serial.write(COM_PORT_DISABLED);
-        //  Serial.print("init_Divice_Entry_Run : ");
-        //  Serial.println(init_Divice_Entry_Run);
+      case SET_DIGITAL_OUT:
+        remainMode = SET_DIGITAL_OUT;
+        remainPort = 0;
+        remainData = 0;
+        break;
+      case SET_NO_TONE:
+        noTone(tonePin);
+        portMode[tonePin] = 0;
+        portValue[tonePin] = 0;
+        tonePin = 0;
+        // Serial.print("SET_NO_TONE : ");
+        // Serial.println(SET_NO_TONE);
         break;
       case SET_BLUE_PW:
         // Serial.print("AT start");
         set_blue_pw();
         break;
-      case SET_NO_TONE:
-        noTone(tonePin);
-        portMode[tonePin] = SET_PORT_DISABLE;
-        portValue[tonePin] = 0;
-        tonePin = 0;
-        // Serial.print("SET_NO_TONE : ");
-        // Serial.println(SET_NO_TONE);
+      }
+      break;
+    // -----------------------------------------------------------------
+    case SET_GROUP_12:
+      switch (data1)
+      {
+      case SET_ALL_SERVO_RUNTIME_L:
+        remainMode = SET_ALL_SERVO_RUNTIME; // Data2 처리 설정
+        remainPort = 0;
+        remainData = 0;
+        break;
+      case SET_ALL_SERVO_RUNTIME_H:
+        remainMode = SET_ALL_SERVO_RUNTIME; // Data2 처리 설정
+        remainPort = 0;
+        remainData = B10000000 << 1;
         break;
       case SET_MOTOR_CURRENT_A:
         portMode[SEN_A] = SET_MOTOR_CURRENT;
@@ -96,136 +108,80 @@ void data1Handling(int data1)
       case SET_MOTOR_CURRENT_B:
         portMode[SEN_B] = SET_MOTOR_CURRENT;
         break;
-      case SET_SERVO_RUNTIME:
-        remainMode = data1; // Data2 처리 설정
-        remainPort = 0;
-        remainData = 0;
-        break;
       }
       break;
-    // Level 222222222222222222222222
+    // -----------------------------------------------------------------
     case SET_GROUP_MOTOR_S:
-      // Motor Command
-      remainMode = data1 & B11111100; // Data2 처리 설정
+      mode = data1 & B11111100;
+      // SET_MOTOR_SPEED_Free:
+      // SET_MOTOR_SPEED_Fast:
+      remainMode = mode; // Data2 처리 설정
       remainidx = data1 & B1;
       remainPort = mapM_S_IdxToPortNo[remainidx];
       remainData = (data1 << 6) & B10000000;
       break;
-    // Level 222222222222222222222222
-    case SET_SERVO_SPEED_L: // Data2 처리 설정
-    case SET_SERVO_SPEED_H: // Data2 처리 설정
-      remainMode = SET_SERVO_SPEED;
-      idx = data1 & B111;
-      remainidx = idx;
-      remainPort = servo_IdxToPortNo[idx];
-      remainData = (data1 << 4) & B10000000;
+    // -----------------------------------------------------------------
+    case SET_GROUP_TONE_PWM:
+      mode = data1 & B11111100;
+      switch (mode)
+      {
+      case SET_PWM: // Data2 처리 설정
+        remainMode = SET_PWM;
+        idx = data1 & B11;
+        remainPort = mapPWM_IdxToPortNo[idx];
+        remainData = 0;
+        break;
+      case SET_TONE: // Data2 처리 설정
+        remainMode = SET_TONE;
+        idx = data1 & B11;
+        remainPort = map_IdxToPortNo_D[idx];
+        remainData = 0;
+        if (tonePin != remainPort)
+        { // 버저를 여러개 포트에서 사용할 때 기존 버저 닫음.
+          noTone(tonePin);
+        }
+        tonePin = remainPort;
+        break;
+      }
       break;
     }
     break;
-  // Level 11111111111111111111111111
-  case SET_GROUP_D_OUT:
-    idx = data1 & B00000111;
+  // ================================================================================
+  case SET_GROUP_2:
+    remainMode = SET_SERVO_POSITION;
+    idx = data1 & B111;
+    remainidx = idx;
+    remainPort = servo_IdxToPortNo[idx];
+    remainData = (data1 << 4) & B10000000;
+    // Serial.print(mode);
+    // Serial.print(" idx:");
+    // Serial.print(idx);
+    // Serial.print(" remainPort:");
+    // Serial.println(remainPort);
+    break;
+  // ================================================================================
+  case SET_GROUP_3:
     mode = data1 & B11110000;
-    switch (mode)
-    {
-    case SET_DIGITAL_OUT_L:
-      portNo = map_IdxToPortNo_L[idx];
-      break;
-    case SET_DIGITAL_OUT_H:
-      portNo = map_IdxToPortNo_H[idx];
-      break;
-    }
-    if (portMode[portNo] != mode)
-    {
-      portMode[portNo] = mode;
-      pinMode(portNo, OUTPUT);
-    }
-    portValue[portNo] = (data1 & B00001000) >> 3;
-    digitalWrite(portNo, portValue[portNo]);
-    // isOutputUpdated[portNo] = 1;
-    // Serial.print("SET_DIGITAL_OUT : ");
-    // Serial.println(mode);
-    // Serial.print("portNo : ");
-    // Serial.println(portNo);
-    // Serial.print("Value : ");
-    // Serial.println(portValue[portNo]);
+    // SET_SERVO_SPEED:
+    // SET_SERVO_RUNTIME:
+    remainMode = mode;
+    idx = data1 & B111;
+    remainidx = idx;
+    remainPort = servo_IdxToPortNo[idx];
+    remainData = (data1 << 4) & B10000000;
     break;
-  // Level 11111111111111111111111111
-  case SET_GROUP_SERVO_PWM_TON:
+  // ================================================================================
+  case SET_GROUP_TONE_PWM:
     mode = data1 & B11111000;
     switch (mode)
     {
-    case SET_SERVO_POSITION_L: // Data2 처리 설정
-    case SET_SERVO_POSITION_H: // Data2 처리 설정
-      remainMode = SET_SERVO_POSITION;
-      idx = data1 & B111;
-      remainidx = idx;
-      remainPort = servo_IdxToPortNo[idx];
-      remainData = (data1 << 4) & B10000000;
-      // Serial.print(mode);
-      // Serial.print(" idx:");
-      // Serial.print(idx);
-      // Serial.print(" remainPort:");
-      // Serial.println(remainPort);
-      break;
-    case SET_PWM: // Data2 처리 설정
-      remainMode = SET_PWM;
-      idx = data1 & B11;
-      remainPort = mapPWM_IdxToPortNo[idx];
-      remainData = 0;
-      break;
-    case SET_TONE: // Data2 처리 설정
-      remainMode = SET_TONE;
-      idx = data1 & B111;
-      remainPort = map_IdxToPortNo_L[idx];
-      remainData = 0;
-      if (tonePin != remainPort)
-      { // 버저를 여러개 포트에서 사용할 때 기존 버저 닫음.
-        noTone(tonePin);
-      }
-      tonePin = remainPort;
-      break;
-    }
-    break;
-  // Level 11111111111111111111111111
-  case SET_GROUP_INPUT:
-    idx = data1 & B00000111;
-    mode = data1 & B11111000;
-    switch (mode)
-    {
-    case SET_DIGITAL_IN_L:
-      portNo = map_IdxToPortNo_L[idx];
-      if (portMode[portNo] != SET_DIGITAL_IN_L)
-      {
-        portMode[portNo] = SET_DIGITAL_IN_L;
-        pinMode(portNo, INPUT);
-      }
-      // Serial.print("SET_DIGITAL_IN_L [idx: ");
-      // Serial.print(idx);
-      // Serial.print("] [PortNo: ");
-      // Serial.print(portNo);
-      // Serial.println("]");
-      break;
-    case SET_DIGITAL_IN_H:
-      portNo = map_IdxToPortNo_H[idx];
-      if (portMode[portNo] != SET_DIGITAL_IN_H)
-      {
-        portMode[portNo] = SET_DIGITAL_IN_H;
-        pinMode(portNo, INPUT);
-      }
-      // Serial.print("SET_DIGITAL_IN_H [idx: ");
-      // Serial.print(idx);
-      // Serial.print("] [PortNo: ");
-      // Serial.print(portNo);
-      // Serial.println("]");
-      break;
     case SET_ANALOG_IN:
       portNo = map_IdxToPortNo_A[idx];
       portMode[portNo] = SET_ANALOG_IN;
       break;
     case SET_ULTRASONIC:
       remainMode = SET_ULTRASONIC;
-      remainPort = map_IdxToPortNo_L[idx]; // Data2 에서 에코 포트 값 설정
+      remainPort = map_IdxToPortNo_D[idx]; // Data2 에서 에코 포트 값 설정
       remainData = 0;
       /*
         //Serial.print("SET_ULTRASONIC Data1  idx: ");
@@ -236,8 +192,24 @@ void data1Handling(int data1)
         //Serial.println(remainPort);
       */
       break;
+    case SET_DIGITAL_IN_L:
+    case SET_DIGITAL_IN_H:
+      idx = data1 & B00001111;
+      portNo = map_IdxToPortNo_D[idx];
+      if (portMode[portNo] != SET_DIGITAL_IN)
+      {
+        portMode[portNo] = SET_DIGITAL_IN;
+        pinMode(portNo, INPUT);
+      }
+      // Serial.print("SET_DIGITAL_IN [idx: ");
+      // Serial.print(idx);
+      // Serial.print("] [PortNo: ");
+      // Serial.print(portNo);
+      // Serial.println("]");
+      break;
     }
     break;
+    // ===============================================================================
   }
 }
 
@@ -252,55 +224,90 @@ void data2Handling(int data2)
     -------------------------------------------------*/
   switch (remainMode)
   {
+  case SET_DIGITAL_OUT:
+    idx = data2 & B00001111;
+    portNo = map_IdxToPortNo_D[idx];
+    if (portMode[portNo] != SET_DIGITAL_OUT)
+    {
+      portMode[portNo] = SET_DIGITAL_OUT;
+      pinMode(portNo, OUTPUT);
+    }
+    portValue[portNo] = (data2 & B00010000) >> 4;
+    digitalWrite(portNo, portValue[portNo]);
+    // isOutputUpdated[portNo] = 1;
+    // Serial.print("SET_DIGITAL_OUT : ");
+    // Serial.println(mode);
+    // Serial.print("portNo : ");
+    // Serial.println(portNo);
+    // Serial.print("Value : ");
+    // Serial.println(portValue[portNo]);
+    break;
+
+  case SET_ALL_SERVO_RUNTIME:
+  {
+    int port;
+    //Serial.println("All Servo Runtime");
+    for (int i = 0; i < Size_Servo; i++)
+    {
+      port = servo_IdxToPortNo[i];
+      portMode[port] = SET_SERVO_RUNTIME;
+      servoT_Start[i] = millis();
+      servoT_Run[i] = portValue[0] * 100; // 1초가 10로 입력됨 --> ms 로 변환
+      
+      Serial.print("Port[");
+      Serial.print(port);
+      Serial.print("] runT:");
+      Serial.println(servoT_Run[i]);
+    }
+  }
+  break;
+
   case SET_SERVO_RUNTIME:
-    AServoT_Start = millis();
-    AservoT_Run = data2 * 100; // 1초가 10로 입력됨 --> ms 로 변환
-    isAServerControlMode = 0x0f;
-    // Serial.println("SET_SERVO_RUNTIME");
+    portMode[remainPort] = SET_SERVO_RUNTIME;
+    servoT_Start[remainidx] = millis();
+    servoT_Run[remainidx] = portValue[remainPort] * 100; // 1초가 10로 입력됨 --> ms 로 변환
+    //  Serial.println("SET_SERVO_RUNTIME");
     break;
 
   case SET_SERVO_POSITION:
-    if (portMode[remainPort] != SET_SERVO_POSITION)
+    if ((portMode[remainPort] != SET_SERVO_RUNTIME) || (portMode[remainPort] != SET_SERVO_SPEED))
     {
-      portMode[remainPort] = SET_SERVO_POSITION;
       servo[remainidx].attach(remainPort);
     }
     // ServoP_Start, ServoP_NOw 는  Target에 도착했을 때 값을 동기화 시킨다.
     // 그렇지 않으면 서보 동작 함수에서 과거 값을 사용할 수 있다.
-    // 여기에서 아래구분을 사용하면
-    
     // 서보 전체 동작 신호 수신 -->  서보 전체 동작 함수 실행 --> 서보 Target 값 순으로 실행 시
     //  servoP_Target = 100         servoP_Target = 100        servoP_Target = 50
     //   servoP_Start = 0            servoP_Start = 0          servoP_Start = 0
-    //   servoP_Now = 100              servoP_Now = 0          servoP_Now = 0 
+    //   servoP_Now = 100              servoP_Now = 0          servoP_Now = 0
     //                    (시간이 0에 가까우므로 스타트 값으로 설정된다)
     servoP_Start[remainidx] = servoP_Now[remainidx];
     servoP_Target[remainidx] = int(6.667 * float(portValue[remainPort]) + 900);
     servoP_Delta[remainidx] = servoP_Target[remainidx] - servoP_Now[remainidx];
-    servoT_Start[remainidx] = millis();
-    servoT_Run[remainidx] = float(abs(float(servoP_Delta[remainidx]) / servoSpeed[remainidx]) * 1000);
-    // Serial.println("SET_SERVO_POSITION");
-    // Serial.print("Set[");
-    // Serial.print(remainidx);
-    // Serial.print("]");
-    // Serial.print(" Now:");
-    // Serial.print(servoP_Now[remainidx]);
-    // Serial.print(" Start:");
-    // Serial.print(servoP_Start[remainidx]);
-    // Serial.print(" Target:");
-    // Serial.print(servoP_Target[remainidx]);
-    // Serial.print(" Delta:");
-    // Serial.print(servoP_Delta[remainidx]);
-    // Serial.print(" RunTime:");
-    // Serial.println(servoT_Run[remainidx]);
+
+    Serial.println("SET_SERVO_POSITION");
+    Serial.print("Set[");
+    Serial.print(remainidx);
+    Serial.print("]");
+    Serial.print(" Now:");
+    Serial.print(servoP_Now[remainidx]);
+    Serial.print(" Start:");
+    Serial.print(servoP_Start[remainidx]);
+    Serial.print(" Target:");
+    Serial.print(servoP_Target[remainidx]);
+    Serial.print(" Delta:");
+    Serial.println(servoP_Delta[remainidx]);
     break;
 
   case SET_SERVO_SPEED:
-    servoSpeed[remainidx] = 6.667 * float(portValue[remainPort]);
-    // Serial.print("Speed[");
-    // Serial.print(remainidx);
-    // Serial.print("]");
-    // Serial.println(servoSpeed[remainidx]);
+    portMode[remainPort] = SET_SERVO_SPEED;
+    // servoSpeed[remainidx] = 6.667 * float(portValue[remainPort]);
+    // servoT_Start[remainidx] = millis();
+    // servoT_Run[remainidx] = float(abs(float(servoP_Delta[remainidx]) / servoSpeed[remainidx]) * 1000);
+    //  Serial.print("Speed[");
+    //  Serial.print(remainidx);
+    //  Serial.print("]");
+    //  Serial.println(servoSpeed[remainidx]);
     break;
 
   case SET_MOTOR_SPEED_Free:
@@ -318,13 +325,6 @@ void data2Handling(int data2)
     break;
 
   case SET_MOTOR_SPEED_Fast: //준비해야함.
-    // portValue[remainPort] -= 100;
-    // int dirPortNO = mapM_D_IdxToPortNo[remainidx];
-    // motor[remainidx].speed(portValue[remainPort], portValue[dirPortNO]);
-    //  Serial.print("speed : [ ");
-    //  Serial.print(portNo);
-    //  Serial.print("]: ");
-    //  Serial.println(remainData);
     break;
 
   case SET_PWM:
@@ -361,7 +361,7 @@ void data2Handling(int data2)
   case SET_ULTRASONIC:
     if (portMode[remainPort] != SET_ULTRASONIC)
     {
-      int echo_pin = map_IdxToPortNo_L[data2];
+      int echo_pin = map_IdxToPortNo_D[data2];
       portMode[remainPort] = SET_ULTRASONIC;
       pinMode(remainPort, OUTPUT); // triger 핀
       pinMode(echo_pin, INPUT);    // echo 핀
@@ -399,22 +399,17 @@ void updatePort()
       send_A_Value(portNo, value);
       break;
 
-    case SET_DIGITAL_IN_L:
+    case SET_DIGITAL_IN:
       value = digitalRead(portNo);
-      digitalIn_new_L |= value << mapDigial_PortNoToIdx[portNo];
+      if (portNo < 10)
+      {
+        digitalIn_new_L |= value << mapDigial_PortNoToIdx[portNo];
+      }
+      else
+      {
+        digitalIn_new_H |= value << mapDigial_PortNoToIdx[portNo];
+      }
       // Serial.print("updateProt_D_IN_L [PortNo: ");
-      // Serial.print(portNo);
-      // Serial.print("] [idx: ");
-      // Serial.print(mapDigial_PortNoToIdx[portNo]);
-      // Serial.print("] [value: ");
-      // Serial.print(value);
-      // Serial.println("]: ");
-      break;
-
-    case SET_DIGITAL_IN_H:
-      value = digitalRead(portNo);
-      digitalIn_new_H |= value << mapDigial_PortNoToIdx[portNo];
-      // Serial.print("updateProt_D_IN_H [PortNo: ");
       // Serial.print(portNo);
       // Serial.print("] [idx: ");
       // Serial.print(mapDigial_PortNoToIdx[portNo]);
@@ -426,7 +421,7 @@ void updatePort()
     case SET_ULTRASONIC:
     {
       unsigned long ultra_distance;
-      int echoPortNo = map_IdxToPortNo_L[portValue[portNo]]; // 트리거 포트에 Value 에 저장된 값이 echo idx
+      int echoPortNo = map_IdxToPortNo_D[portValue[portNo]]; // 트리거 포트에 Value 에 저장된 값이 echo idx
       digitalWrite(portNo, LOW);                             // 트리거 Low
       delayMicroseconds(2);
       digitalWrite(portNo, HIGH); // 트리거 high
@@ -520,50 +515,51 @@ void send_D_Value()
 
 void ServoPoistionUpdate()
 {
-  if (isAServerControlMode)
+  for (idx = 0; idx < Size_Servo; idx++)
   {
-    AServoT_Now = millis() - AServoT_Start;
-    if (AServoT_Now >= AservoT_Run)
+    portNo = servo_IdxToPortNo[idx];
+    if (portMode[portNo] == SET_SERVO_SPEED)
     {
-      for (idx = 0; idx < Size_Servo; idx++)
+      if ((servoP_Now[idx] != servoP_Target[idx]))
       {
-        servoP_Now[idx] = servoP_Target[idx];
-        servoP_Start[idx] = servoP_Target[idx];
-        servo[idx].writeMicroseconds(servoP_Now[idx]);
-        isAServerControlMode ^= (0x01 << idx);
-      }
-    }
-    else
-    {
-      AServoT_Now = 0.5 * (sin(Pi * (AServoT_Now / AservoT_Run - 0.5)) + 1.0);
-      for (idx = 0; idx < Size_Servo; idx++)
-      {
-        servoP_Now[idx] = int(AServoT_Now * servoP_Delta[idx] + servoP_Start[idx]);
-        servo[idx].writeMicroseconds(servoP_Now[idx]);
-      }
-    }
-  }
-  else
-  {
-    for (idx = 0; idx < Size_Servo; idx++)
-    {
-      portNo = servo_IdxToPortNo[idx];
-      if (portMode[portNo] == SET_SERVO_POSITION)
-      {
-        if ((servoP_Now[idx] != servoP_Target[idx]))
+        ServoT_Now[idx] = millis() - servoT_Start[idx];
+        if (ServoT_Now[idx] >= servoT_Run[idx])
         {
-          ServoT_Now[idx] = millis() - servoT_Start[idx];
-          if (ServoT_Now[idx] >= servoT_Run[idx])
-          {
-            servoP_Now[idx] = servoP_Target[idx];
-            servoP_Start[idx] = servoP_Target[idx];
-          }
-          else
-          {
-            servoP_Now[idx] = int((ServoT_Now[idx] / servoT_Run[idx]) * servoP_Delta[idx] + servoP_Start[idx]);
-          }
-          servo[idx].writeMicroseconds(servoP_Now[idx]);
+          servoP_Now[idx] = servoP_Target[idx];
+          servoP_Start[idx] = servoP_Target[idx];
         }
+        else
+        {
+          servoP_Now[idx] = int((ServoT_Now[idx] / servoT_Run[idx]) * servoP_Delta[idx] + servoP_Start[idx]);
+        }
+        servo[idx].writeMicroseconds(servoP_Now[idx]);
+      }
+    }
+
+    if (portMode[portNo] == SET_SERVO_RUNTIME)
+    {
+      
+      if ((servoP_Now[idx] != servoP_Target[idx]))
+      {
+        ServoT_Now[idx] = millis() - servoT_Start[idx];
+        if (ServoT_Now[idx] >= servoT_Run[idx])
+        {
+          servoP_Now[idx] = servoP_Target[idx];
+          servoP_Start[idx] = servoP_Target[idx];
+        }
+        else
+        {
+          ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
+          servoP_Now[idx] = int(ServoT_Now[idx] * servoP_Delta[idx] + servoP_Start[idx]);
+          servo[idx].writeMicroseconds(servoP_Now[idx]);
+          
+        }
+        //servo[idx].writeMicroseconds(servoP_Now[idx]);
+        //Serial.print("[");
+        //Serial.print(idx);
+        //Serial.print("]");
+        //Serial.println(servoP_Now[idx]);
+        
       }
     }
   }

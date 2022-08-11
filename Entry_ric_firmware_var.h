@@ -46,49 +46,51 @@ int toneMap[12][8] = {
 //----------------------------------------------------------------------------------------------------------
 //                                            Data 1       -   Data 2        description
 //---------------------------------------------------
-#define SET_GROUP_COMMAND 0x80
+#define SET_GROUP_1	 0x80
 
-#define SET_COM_SYSEM 0x80
+#define SET_GROUP_11 0x80
 #define SET_INIT_DEVICE 0x80     // 128  b100 00 000
-#define SET_PORT_DISABLE 0x81    // 129  b100 00 001    정지 상태에서 작동 상태로 될때 아날로그값은 사용하는 포트만 값을 전송하도록 하기위해 비활성화 상태로 바꿈
-#define SET_BLUE_PW 0x82         // 130  b100 00 010    b0vvv vvvv X2    데이터 두개로 네자리 비번 전송 99 - 99 -> 9999(MAX)
-#define SET_NO_TONE 0x83         // 131  b100 00 011
-#define SET_MOTOR_CURRENT 0x84   // 모드 설정 저장용 값 (업데이트시 사용)
-#define SET_MOTOR_CURRENT_A 0x84 // 엔트리에서 오는 값
-#define SET_MOTOR_CURRENT_B 0x85 // 엔트리에서 오는 값
-#define SET_SERVO_RUNTIME 0x86   // 엔트리에서 오는 값
+#define SET_DIGITAL_OUT 0x81
+#define SET_NO_TONE 0x82         // 131  b100 00 011
+#define SET_BLUE_PW 0x87         // 130  b100 00 010    b0vvv vvvv X2    데이터 두개로 네자리 비번 전송 99 - 99 -> 9999(MAX)
+#define SET_PORT_DISABLE 0x86
 
-#define SET_GROUP_MOTOR_S 0x88
-#define SET_MOTOR_SPEED_Free 0x88 // 144  b100 10 xvp - b0 vvv vvvv    p : 0 = A motor, 1 = B motor, v : speed - 8bit (0 ~ 200)
-#define SET_MOTOR_SPEED_Fast 0x8C // 방향을 따로 지정하는 경우 핸들링1에서 remainmode 로 저장
-
-#define SET_SERVO_SPEED 0x90   // 200  b110 0v ppp - b0 vvv vvvv   v : set servo speed (MAX 1~254)
-#define SET_SERVO_SPEED_L 0x90 // 200  b110 00 ppp - b0 vvv vvvv   v : set servo speed (MAX 1~254)
-#define SET_SERVO_SPEED_H 0x98 // 200  b110 01 ppp - b0 vvv vvvv   v : set servo speed (MAX 1~254)
-
+#define SET_GROUP_12 0x88
+#define SET_ALL_SERVO_RUNTIME 0x88
+#define SET_ALL_SERVO_RUNTIME_L 0x88
+#define SET_ALL_SERVO_RUNTIME_H 0x89
+#define SET_MOTOR_CURRENT 0x8A   // 모드 설정 저장용 값 (업데이트시 사용)
+#define SET_MOTOR_CURRENT_A 0x8A // 엔트리에서 오는 값
+#define SET_MOTOR_CURRENT_B 0x8B // 엔트리에서 오는 값
 // 모터는 상시 토크를 계산 하여, a0(14), a(1)15 에 저장한다.
 // 전류 값은 "모터속도 설정 블록"과 별도로 "전류요청 블록"으로 부터 요청을 받아
 // 전송하며 a0(14), a(1)15핀을 "SET_MOTOR_CURRENT"로 설정한다.
 // 리턴 핀 : 0(A motor)→a0(14), 1(B motor)→a1(15), SET_ANALOG_IN 모드 설정을 한다.
-//---------------------------------------------------
-#define SET_GROUP_D_OUT 0xA0
-#define SET_DIGITAL_OUT_L 0xA0 // 160  b1001 dppp
-#define SET_DIGITAL_OUT_H 0xB0 // 176  b1001 dppp
+
+#define SET_GROUP_MOTOR_S 0x90
+#define SET_MOTOR_SPEED_Free 0x90 // b100 10 xvp - b0 vvv vvvv    p : 0 = A motor, 1 = B motor, v : speed - 8bit (0 ~ 200)
+#define SET_MOTOR_SPEED_Fast 0x94 // 방향을 따로 지정하는 경우 핸들링1에서 remainmode 로 저장
+
+#define SET_GROUP_TONE_PWM 0x98
+#define SET_TONE 0x98            // b100 11 1pp - b0 ooo nnnn   o : 8 octaves(3bit)  n : 12notes(4bit)
+#define SET_PWM 0x9C             // 208  b110 10 xpp - b0 vvv vvvv   v : set pwm value (0~100)
 
 //---------------------------------------------------
-#define SET_GROUP_SERVO_PWM_TON 0xC0 // 192  b110 00 ---
-#define SET_SERVO_POSITION 0xC0      // 192  b110 00 vpp - b0 vvv vvvv   v : set servo value (0~180)
-#define SET_SERVO_POSITION_L 0xC0    // 192  b110 00 vpp - b0 vvv vvvv   v : set servo value (0~180)
-#define SET_SERVO_POSITION_H 0xC8    // 192  b110 00 vpp - b0 vvv vvvv   v : set servo value (0~180)
-#define SET_PWM 0xD0                 // 208  b110 10 xpp - b0 vvv vvvv   v : set pwm value (0~100)
-#define SET_TONE 0xD8                // 216  b110 11 ppp - b0 ooo nnnn   o : 8 octaves(3bit)  n : 12notes(4bit)
+#define SET_GROUP_2 0xA0
+#define SET_SERVO_POSITION 0xA0  // 192  b110 00 vpp - b0 vvv vvvv   v : set servo value (0~180)
+
+//---------------------------------------------------
+#define SET_GROUP_3 0xC0 // 192  b110 00 ---
+#define SET_SERVO_SPEED 0xC0   // 200  b110 0v ppp - b0 vvv vvvv   v : set servo speed (MAX 1~254)
+#define SET_SERVO_RUNTIME 0xD0   // 200  b110 0v ppp - b0 vvv vvvv   v : set servo speed (MAX 1~254)
 
 //---------------------------------------------------
 #define SET_GROUP_INPUT 0xE0  // 224  b111 00 ppp
 #define SET_ANALOG_IN 0xE0    // 224  b111 00 ppp                 request analog input data
-#define SET_DIGITAL_IN_L 0xE8 // 232  b111 01 ppp
-#define SET_DIGITAL_IN_H 0xF0 // 232  b111 10 ppp
-#define SET_ULTRASONIC 0xF8   // 240  b111 11 ppp - b0 xxx xppp   Data1 포트=trig, Data2 포트:echo, 거리 값은 Data2 포트로 리턴
+#define SET_ULTRASONIC 0xE8   // 240  b111 11 ppp - b0 xxx xppp   Data1 포트=trig, Data2 포트:echo, 거리 값은 Data2 포트로 리턴
+#define SET_DIGITAL_IN 0xF0
+#define SET_DIGITAL_IN_L 0xF0   // 232  b111 01 ppp
+#define SET_DIGITAL_IN_H 0xF8   // 232  b111 01 ppp
 
 // ***************************************************************************
 // Mode Code : Deviece → HW
