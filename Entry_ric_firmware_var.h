@@ -89,8 +89,8 @@ int toneMap[12][8] = {
 #define SET_ANALOG_IN 0xE0    // 224  b111 00 ppp                 request analog input data
 #define SET_ULTRASONIC 0xE8   // 240  b111 11 ppp - b0 xxx xppp   Data1 포트=trig, Data2 포트:echo, 거리 값은 Data2 포트로 리턴
 #define SET_DIGITAL_IN 0xF0
-#define SET_DIGITAL_IN_L 0xF0   // 232  b111 01 ppp
-#define SET_DIGITAL_IN_H 0xF8   // 232  b111 01 ppp
+#define SET_DIGITAL_IN_L 0xF0   // b111 1(p) ppp
+#define SET_DIGITAL_IN_H 0xF8   // b111 1(p) ppp
 
 // ***************************************************************************
 // Mode Code : Deviece → HW

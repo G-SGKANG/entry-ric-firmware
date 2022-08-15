@@ -14,39 +14,41 @@
 //
 #define Size_TotalPort 22
 #define Size_UsedPort 14
-#define Size_Port_D 16
+#define Size_Port_D 10
 #define Size_Port_A 8
 #define Size_Servo 7
 #define Size_PWM 2
 
-//   HW Pin NO  (1st Data)       2  ~3   4  ~5  ~6   7   8  ~9 ~10 ~11  |  14 15 16 17 18 19 20 21  | 
+//   HW Pin NO  (1st Data)       2  ~3   4  ~5  ~6   7   8  ~9 ~10 ~11  |  14 15 16 17 18 19 20 21  |
 //   Block                       2  MA   4   5   6   7   8   9  10  MB  |  a0 a1 a2 a3 a4 a5 a6 a7  |
 //                               ↓  ↓    ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓  |   ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  |
 //   IN/OUT, ULTRASONIC, TON     0       1   2   3   4           5      |   ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  |
 //   PWM                                     0   1                      |   ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  |
 //   SERVO POSITION              0           1   2               3      |   ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  |
-//   SERVO SPEED                 0           1   2               3      |                           | 
+//   SERVO SPEED                 0           1   2               3      |                           |
 //   MOTOR SPEED                     0                               1  |   ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  |
 //   ANALOG                                                             |   0  1  2  3  4  5  6  7  |
 //
 // ■ MAP HW -> Device
-int map_IdxToPortNo_D[Size_Port_D] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19}; //{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19};
-int map_IdxToPortNo_A[Size_Port_A] = {14, 15, 16, 17, 18, 19, 20, 21}; // {14, 15, 16, 17, 18, 19, 20, 21};
-int servo_IdxToPortNo[Size_Servo] = {2, 4, 5, 6, 7, 10, 16};                // 서버모터 제어 핀 {2, 4, 5, 6, 7, 10, 16}
-int mapPWM_IdxToPortNo[Size_PWM] = {5, 6};
-int mapM_S_IdxToPortNo[2] = {3, 11}; // 모터 스피드 [ idx --> portNo ] 0:3, 1:11
-int mapM_D_IdxToPortNo[2] = {0, 0};  // 모터 방향   [ idx --> portNo ]
+int map_IdxToPortNo_D[Size_Port_D] = {2, 4, 5, 6, 7, 10, 16, 17, 18, 19}; //{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19};
+int map_IdxToPortNo_A[Size_Port_A] = {14, 15, 16, 17, 18, 19, 20, 21};    // {14, 15, 16, 17, 18, 19, 20, 21};
+int map_IdxToPortNo_Servo[Size_Servo] = {2, 4, 5, 6, 7, 10, 16};          // 서버모터 제어 핀 {2, 4, 5, 6, 7, 10, 16}
+int map_IdxToPortNo_PWM[Size_PWM] = {5, 6};
+int map_IdxToPortNo_Ultra[6] = {2, 4, 5, 6, 7, 10};
+int map_IdxToPortNo_MotorSpeed[2] = {3, 11}; // 모터 스피드 [ idx --> portNo ] 0:3, 1:11
+int map_IdxToPortNo_MotorDir[2] = {0, 0};    // 모터 방향   [ idx --> portNo ]
+int map_IdxToPortNo_Tone[4] = {5, 6, 7, 10};
 
-// ■ MAP HW control                0  1  2  3  4   5   6   7   8   9  10  11  12  13
+// ■ MAP HW control               0  1  2  3  4   5   6   7   8   9  10  11  12  13
 int mapUsedPort[Size_UsedPort] = {2, 4, 5, 6, 7, 10, 14, 15, 16, 17, 18, 19, 20, 21}; // {2, 4, 5, 6, 7, 10, 14, 15, 16, 17, 18, 19, 20, 21}
 //                          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-int mapMotor_PortToIdx[] = {0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 3, 1, 0, 0, 0, 1}; // DC 모터 [ 3:0, 11:1 ], DC 전류 [14:0, 15:1], 서보 모터  [ 2:0, 5:1, 6:2, 10:3 ]
+int map_PortToIdx_Motor[] = {0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 3, 1, 0, 0, 0, 1}; // DC 모터 [ 3:0, 11:1 ], DC 전류 [14:0, 15:1], 서보 모터  [ 2:0, 5:1, 6:2, 10:3 ]
 
 // ■ MAP Device -> HW
 //                            (0)(1) 2 (3) 4  5  6  7 (8)(9) 10 11 12 13 14 15 16 17 18 19
-int mapDigial_PortNoToIdx[] = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7,  0, 1, 2, 3, 0, 0, 4, 5, 6, 7}; // Entry-HW에 Digtal값 전송 시 idx { D2:0, D4:2, D5:3, D6:4, D7:5, D10:0, A2:4, A3:5, A4:6, A5:7 }
+int map_PortToIdx_D[] = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 0, 0, 4, 5, 6, 7}; // Entry-HW에 Digtal값 전송 시 idx { D2:0, D4:2, D5:3, D6:4, D7:5, D10:0, A2:4, A3:5, A4:6, A5:7 }
 //                          (0)(1) 2 (3) 4  5  6  7 (8)(9) 10 11 12 13 14 15 16  17  18  19  20  21
-int mapAnalog_PortNoIdx[] = {0, 0, 2, 0, 3, 4, 5, 6, 0, 0, 7, 0, 0, 0, 8, 9, 10, 11, 12, 13, 14, 15}; // Entry-HW에 Analog 값 전송 시 idx { D2:2, D4:3, D5:4, D6:5, D7:6, D10:7  | A14:8 ~ A21:15 }
+int map_PortToIdx_A[] = {0, 0, 2, 0, 3, 4, 5, 6, 0, 0, 7, 0, 0, 0, 8, 9, 10, 11, 12, 13, 14, 15}; // Entry-HW에 Analog 값 전송 시 idx { D2:2, D4:3, D5:4, D6:5, D7:6, D10:7  | A14:8 ~ A21:15 }
 
 // **************************************************
 // ******************  변 수 선 언  ******************
@@ -69,7 +71,7 @@ float servoT_Run[Size_Servo] = {1800, 1800, 1800, 1800, 1800, 1800, 1800}; // [m
 
 float Pi = 3.14159;
 
-float servoSpeed[Size_Servo] = {666.667, 666.667, 666.667, 666.667, 666.667, 666.667, 666.667};  // 0~180 1.8 초
+float servoSpeed[Size_Servo] = {666.667, 666.667, 666.667, 666.667, 666.667, 666.667, 666.667}; // 0~180 1.8 초
 
 int servoP_Start[Size_Servo] = {1500, 1500, 1500, 1500, 1500, 1500, 1500};
 int servoP_Now[Size_Servo] = {1500, 1500, 1500, 1500, 1500, 1500, 1500};
@@ -151,7 +153,7 @@ void init_Divice_Entry_Stop()
         portNo = map_IdxToPortNo_A[idx];
         // analogRead(portNo);
         portMode[portNo] = SET_ANALOG_IN; //
-        portValue[portNo] = -1;  // 종료뒤 값을 한번 전송하기 위해 값을 임으로 변경
+        portValue[portNo] = -1;           // 종료뒤 값을 한번 전송하기 위해 값을 임으로 변경
     }
 
     // 모터 초기화
