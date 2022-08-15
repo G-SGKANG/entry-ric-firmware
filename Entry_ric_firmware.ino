@@ -82,10 +82,10 @@ void data1Handling(int data1)
           portMode[tonePin] = 0;
           portValue[tonePin] = 0;
           tonePin = 0;
-          //Serial.println();
-          //Serial.print("NO_TONE_in_noTon[");
-          //Serial.print(tonePin);
-          //Serial.println("] : ");
+          // Serial.println();
+          // Serial.print("NO_TONE_in_noTon[");
+          // Serial.print(tonePin);
+          // Serial.println("] : ");
         }
 
         break;
@@ -313,13 +313,14 @@ void data2Handling(int data2)
 
   case SET_SERVO_SPEED:
     portMode[remainPort] = SET_SERVO_SPEED;
-    // servoSpeed[remainidx] = 6.667 * float(portValue[remainPort]);
-    // servoT_Start[remainidx] = millis();
-    // servoT_Run[remainidx] = float(abs(float(servoP_Delta[remainidx]) / servoSpeed[remainidx]) * 1000);
-    // Serial.print("Speed[");
-    // Serial.print(remainidx);
-    // Serial.print("]");
-    // Serial.println(servoSpeed[remainidx]);
+    servoT_Start[remainidx] = millis();
+    servoSpeed[remainidx] = 6.667 * float(portValue[remainPort]); // 1200ms / 18deg = 6.667
+    servoT_Run[remainidx] = float(abs(float(servoP_Delta[remainidx]) / servoSpeed[remainidx]) * 1000);
+     //Serial.println("SET_SERVO_RUNTIME");
+     //Serial.print("Speed[");
+     //Serial.print(remainidx);
+     //Serial.print("]");
+     //Serial.println(servoT_Run[remainidx]);
     break;
 
   case SET_MOTOR_SPEED_Free:
@@ -360,9 +361,9 @@ void data2Handling(int data2)
     motor[0].speed(0); // 정지
     motor[1].speed(0); // 정지
 
-    //Serial.println();
-    //Serial.print("tonPin:");
-    //Serial.print(tonePin);
+    // Serial.println();
+    // Serial.print("tonPin:");
+    // Serial.print(tonePin);
 
     if (tonePin != remainPort)
     {
@@ -371,10 +372,10 @@ void data2Handling(int data2)
         noTone(tonePin);
         portMode[tonePin] = 0;
         portValue[tonePin] = 0;
-        //Serial.println();
-        //Serial.print("NO_TONE_in_setTon[");
-        //Serial.print(tonePin);
-        //Serial.print("] : ");
+        // Serial.println();
+        // Serial.print("NO_TONE_in_setTon[");
+        // Serial.print(tonePin);
+        // Serial.print("] : ");
       }
       tonePin = remainPort;
       portMode[remainPort] = SET_TONE;
@@ -384,10 +385,10 @@ void data2Handling(int data2)
       int notes = portValue[remainPort] & 0x0F;
       int octaves = (portValue[remainPort] >> 4) & 0x07;
       tone(remainPort, toneMap[notes][octaves]);
-      //Serial.println();
-      //Serial.print("TONE[");
-      //Serial.print(remainPort);
-      //Serial.println("] : ");
+      // Serial.println();
+      // Serial.print("TONE[");
+      // Serial.print(remainPort);
+      // Serial.println("] : ");
     }
     break;
 
@@ -553,13 +554,14 @@ void ServoPoistionUpdate()
     portNo = map_IdxToPortNo_Servo[idx];
     if (portMode[portNo] == SET_SERVO_SPEED)
     {
-      if ((servoP_Now[idx] != servoP_Target[idx]))
+      if (servoT_Start[idx] > 0) // 서보 스타트 시간이 존재할 때 기동
       {
         ServoT_Now[idx] = millis() - servoT_Start[idx];
         if (ServoT_Now[idx] >= servoT_Run[idx])
         {
           servoP_Now[idx] = servoP_Target[idx];
           servoP_Start[idx] = servoP_Target[idx];
+          servoT_Start[idx] = 0;
         }
         else
         {
@@ -584,9 +586,8 @@ void ServoPoistionUpdate()
         {
           ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
           servoP_Now[idx] = int(ServoT_Now[idx] * servoP_Delta[idx] + servoP_Start[idx]);
-          servo[idx].writeMicroseconds(servoP_Now[idx]);
         }
-        // servo[idx].writeMicroseconds(servoP_Now[idx]);
+        servo[idx].writeMicroseconds(servoP_Now[idx]);
         // Serial.print("[");
         // Serial.print(idx);
         // Serial.print("]");
