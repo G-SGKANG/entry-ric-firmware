@@ -73,9 +73,9 @@ float Pi = 3.14159;
 
 float servoSpeed[Size_Servo] = {666.667, 666.667, 666.667, 666.667, 666.667, 666.667, 666.667}; // 0~180 1.8 초
 
-int servoP_Start[Size_Servo] = {1500, 1500, 1500, 1500, 1500, 1500, 1500};
-int servoP_Now[Size_Servo] = {1500, 1500, 1500, 1500, 1500, 1500, 1500};
-int servoP_Target[Size_Servo] = {1500, 1500, 1500, 1500, 1500, 1500, 1500};
+int servoP_Start[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
+int servoP_Now[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
+int servoP_Target[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
 int servoP_Delta[Size_Servo] = {0, 0, 0, 0, 0, 0, 0};
 
 // 모터 설정 :  모터 생성, 드라이버(L298) 제어핀,상수, 변수
