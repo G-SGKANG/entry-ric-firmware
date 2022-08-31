@@ -316,11 +316,11 @@ void data2Handling(int data2)
     servoT_Start[remainidx] = millis();
     servoSpeed[remainidx] = 6.667 * float(portValue[remainPort]); // 1200ms / 18deg = 6.667
     servoT_Run[remainidx] = float(abs(float(servoP_Delta[remainidx]) / servoSpeed[remainidx]) * 1000);
-     //Serial.println("SET_SERVO_RUNTIME");
-     //Serial.print("Speed[");
-     //Serial.print(remainidx);
-     //Serial.print("]");
-     //Serial.println(servoT_Run[remainidx]);
+    // Serial.println("SET_SERVO_RUNTIME");
+    // Serial.print("Speed[");
+    // Serial.print(remainidx);
+    // Serial.print("]");
+    // Serial.println(servoT_Run[remainidx]);
     break;
 
   case SET_MOTOR_SPEED_Free:
@@ -549,6 +549,7 @@ void send_D_Value()
 
 void ServoPoistionUpdate()
 {
+  float dt = 0;
   for (idx = 0; idx < Size_Servo; idx++)
   {
     portNo = map_IdxToPortNo_Servo[idx];
@@ -584,14 +585,32 @@ void ServoPoistionUpdate()
         }
         else
         {
-          ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
+          // Sin()
+          // ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
+
+          // 등가속도
+          /*
+          dt = ServoT_Now[idx] / servoT_Run[idx];
+          if (dt <= 0.5)
+          {
+            ServoT_Now[idx] = 2 * dt * dt;
+          }
+          else
+          {
+            dt -= 1;
+            ServoT_Now[idx] = 1.0 - 2.0 * dt * dt;
+          }
+          */
+
+          //등속도
+          ServoT_Now[idx] = ServoT_Now[idx] / servoT_Run[idx];
           servoP_Now[idx] = int(ServoT_Now[idx] * servoP_Delta[idx] + servoP_Start[idx]);
         }
         servo[idx].writeMicroseconds(servoP_Now[idx]);
-        // Serial.print("[");
-        // Serial.print(idx);
-        // Serial.print("]");
-        // Serial.println(servoP_Now[idx]);
+        //  Serial.print("[");
+        //  Serial.print(idx);
+        //  Serial.print("]");
+        //  Serial.println(servoP_Now[idx]);
       }
     }
   }
