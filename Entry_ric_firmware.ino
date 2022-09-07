@@ -589,7 +589,7 @@ void ServoPoistionUpdate()
           // ServoT_Now[idx] = 0.5 * (sin(Pi * (ServoT_Now[idx] / servoT_Run[idx] - 0.5)) + 1.0);
 
           // 등가속도
-          /*
+          
           dt = ServoT_Now[idx] / servoT_Run[idx];
           if (dt <= 0.5)
           {
@@ -600,10 +600,8 @@ void ServoPoistionUpdate()
             dt -= 1;
             ServoT_Now[idx] = 1.0 - 2.0 * dt * dt;
           }
-          */
 
-          //등속도
-          ServoT_Now[idx] = ServoT_Now[idx] / servoT_Run[idx];
+          //ServoT_Now[idx] = ServoT_Now[idx] / servoT_Run[idx];
           servoP_Now[idx] = int(ServoT_Now[idx] * servoP_Delta[idx] + servoP_Start[idx]);
         }
         servo[idx].writeMicroseconds(servoP_Now[idx]);

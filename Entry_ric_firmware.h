@@ -32,7 +32,7 @@
 // ■ MAP HW -> Device
 int map_IdxToPortNo_D[Size_Port_D] = {2, 4, 5, 6, 7, 10, 16, 17, 18, 19}; //{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19};
 int map_IdxToPortNo_A[Size_Port_A] = {14, 15, 16, 17, 18, 19, 20, 21};    // {14, 15, 16, 17, 18, 19, 20, 21};
-int map_IdxToPortNo_Servo[Size_Servo] = {2, 4, 5, 6, 7, 10, 16};          // 서버모터 제어 핀 {2, 4, 5, 6, 7, 10, 16}
+int map_IdxToPortNo_Servo[Size_Servo] = {2, 4, 7, 10, 16, 17, 18};        // 서버모터 제어 핀 {2, 4, , 6, 7, 10, 16}
 int map_IdxToPortNo_PWM[Size_PWM] = {5, 6};
 int map_IdxToPortNo_Ultra[6] = {2, 4, 5, 6, 7, 10};
 int map_IdxToPortNo_MotorSpeed[2] = {3, 11}; // 모터 스피드 [ idx --> portNo ] 0:3, 1:11
@@ -73,9 +73,9 @@ float Pi = 3.14159;
 
 float servoSpeed[Size_Servo] = {666.667, 666.667, 666.667, 666.667, 666.667, 666.667, 666.667}; // 0~180 1.8 초
 
-int servoP_Start[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
-int servoP_Now[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
-int servoP_Target[Size_Servo] = {900, 1500, 900, 1500, 900, 1500, 900};
+int servoP_Start[Size_Servo] = {900, 1853, 900, 1500, 900, 1500, 900}; // 2번 모터 143 도 = 1853ms = 90도
+int servoP_Now[Size_Servo] = {900, 1853, 900, 1500, 900, 1500, 900};
+int servoP_Target[Size_Servo] = {900, 1853, 900, 1500, 900, 1500, 900};
 int servoP_Delta[Size_Servo] = {0, 0, 0, 0, 0, 0, 0};
 
 // 모터 설정 :  모터 생성, 드라이버(L298) 제어핀,상수, 변수
@@ -127,6 +127,21 @@ void init_Servo()
         if (servo[idx].attached())
         {
             servo[idx].detach();
+            /*
+            portNo = map_IdxToPortNo_Servo[idx];
+
+            servoP_Start[idx] = servoP_Now[idx];
+            servoP_Target[idx] = int(6.667 * float(portValue[idx]) + 900);
+            servoP_Delta[idx] = servoP_Target[idx] - servoP_Now[idx];
+            servoT_Start[idx] = 0; // 서보 모드에서 스타트 시간을 업데이트 할때 서보 기동
+
+            portMode[idx] = SET_SERVO_SPEED;
+            servoT_Start[idx] = millis();
+            servoSpeed[idx] = 6.667 * float(portValue[remainPort]); // 1200ms / 18deg = 6.667
+            servoT_Run[idx] = float(abs(float(servoP_Delta[idx]) / servoSpeed[idx]) * 1000);
+
+            servo[idx].attach(remainPort);
+        */
         }
     }
 }
